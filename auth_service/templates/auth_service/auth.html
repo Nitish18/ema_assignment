@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Google Drive Auth</title>
+</head>
+<body>
+    {% if request.session.credentials %}
+        <h2>You are authenticated!</h2>
+        <a href="{% url 'logout' %}">Logout</a>
+    {% else %}
+        <h2>You are not authenticated yet.</h2>
+        <a href="{% url 'drive_auth' %}">Authenticate with Google Drive</a>
+    {% endif %}
+</body>
+</html>
