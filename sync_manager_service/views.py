@@ -1,6 +1,7 @@
 import googleapiclient
 from googleapiclient.discovery import build
 import os
+from django.conf import settings
 
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
@@ -32,7 +33,7 @@ def google_drive_webhook(request):
             credentials = get_credentials_from_user_credentials(user_credentials)
 
             # Handle different resource states
-            if resource_state == 'delete':
+            if resource_state == 'delete' or resource_state == 'trash':
                 # File was deleted; remove it from local storage
                 print(f"File {file_id} was deleted. Removing from local storage...")
                 handle_file_deletion(file_id)
@@ -99,13 +100,13 @@ def handle_file_deletion(file_id):
         drive_file = DriveFile.objects.get(file_id=file_id)
         file_name = drive_file.name  # Assuming 'name' stores the file name
 
+        file_path = settings.BASE_DIR + f'/downloads/{file_name}'
         # Construct the file path using the file name
-        file_path = f'/downloads/{file_name}'  # Replace with your actual storage path
 
         # Delete the file from the local system
         if os.path.exists(file_path):
             os.remove(file_path)
-            print(f"Deleted file {file_name} from local storage")
+            print(f"Deleted file {file_path} from local storage")
         else:
             print(f"File {file_name} does not exist in local storage")
 

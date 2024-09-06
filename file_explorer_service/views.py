@@ -27,13 +27,13 @@ def get_drive_files(request):
         if 'folderId' in query_params:
             query = f"'{query_params['folderId']}' in parents"
         else:
-            query = "'root' in parents"
+            query = "'root' in parents or sharedWithMe"
 
         # Fetch all files and folders from Google Drive
         results = service.files().list(
             q=query,
             pageSize=1000,  # Fetches up to 1000 items per page
-            fields="nextPageToken, files(id, name, mimeType, parents, capabilities)"
+            fields="nextPageToken, files(id, name, mimeType, parents, capabilities, trashed, size)"
         ).execute()
 
         items = results.get('files', [])
@@ -41,13 +41,14 @@ def get_drive_files(request):
         # Prepare the data for response
         file_data = []
         for item in items:
-            file_data.append({
-                'id': item['id'],
-                'name': item['name'],
-                'mimeType': item['mimeType'],
-                'parents': item.get('parents', []),
-                'can_download': item.get('capabilities', {}).get('canDownload', False),
-            })
+            if not item.get('trashed', False):
+                file_data.append({
+                    'id': item['id'],
+                    'name': item['name'],
+                    'mimeType': item['mimeType'],
+                    'parents': item.get('parents', []),
+                    'size': item.get('size', 0),
+                })
 
         # Return the list of files and folders as JSON
         return JsonResponse({'files': file_data})

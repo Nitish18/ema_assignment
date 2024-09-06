@@ -7,6 +7,7 @@ from .models import DriveFile
 
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from sync_manager_service.syncer import create_watch  # Import the create_watch function
 
 
 @shared_task
@@ -80,3 +81,29 @@ def download_file_task(file_id, credentials):
         # If an error occurs, update the file status to 'failed'
         DriveFile.objects.filter(file_id=file_id).update(status='failed')
         return str(e)
+
+
+def download_files_in_folder(folder_id, credentials, user_id=None):
+    """
+    Downloads all files inside a given Google Drive folder by folder_id, including files in subfolders.
+    """
+    service = build('drive', 'v3', credentials=credentials)
+
+    # Fetch all files inside the folder (i.e., files where the folder_id is in their parents field)
+    query = f"'{folder_id}' in parents and trashed = false"  # Fetch non-trashed files
+    files_in_folder = service.files().list(q=query, fields="files(id, name, mimeType)").execute()
+
+    # Iterate over each file and download it using download_file_task
+    for file_metadata in files_in_folder.get('files', []):
+        file_id = file_metadata['id']
+        file_name = file_metadata['name']
+
+        if file_metadata['mimeType'] == 'application/vnd.google-apps.folder':
+            # Recursively download files from subfolders (optional)
+            download_files_in_folder(file_id, credentials, user_id)
+        else:
+            # Download individual file
+            download_file_task(file_id, credentials)
+            create_watch(credentials, file_id, user_id)
+
+    return "All files downloaded successfully"

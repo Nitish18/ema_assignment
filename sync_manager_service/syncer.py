@@ -6,6 +6,7 @@ from googleapiclient.discovery import build
 from file_processor_service.models import DriveFile
 import os
 from sync_manager_service.models import DriveWatch
+from django.conf import settings
 
 
 def create_watch(credentials, file_id=None, user_id=None):
@@ -34,11 +35,13 @@ def create_watch(credentials, file_id=None, user_id=None):
         response = service.changes().watch(body=watch_request_body).execute()
 
     # Store the channel ID, resource ID, and user ID in the database
-    DriveWatch.objects.create(
+    DriveWatch.objects.update_or_create(
         user_id=user_id,
         channel_id=channel_id,
-        resource_id=response['resourceId'],  # The resource ID from the response
-        file_id=file_id
+        defaults={
+            "resource_id": response['resourceId'],
+            "file_id": file_id,
+        }
     )
 
     return response
@@ -61,8 +64,6 @@ def fetch_and_process_drive_changes(file_id, credentials):
             handle_file_deletion(file_id)
         else:
             print(f"File {file_metadata['name']} (ID: {file_id}) was updated or modified.")
-            # Handle file update locally and in the database
-            handle_file_update(file_metadata)
 
     except Exception as e:
         print(f"Error fetching or processing changes for file {file_id}: {str(e)}")
@@ -72,8 +73,11 @@ def handle_file_deletion(file_id):
     """
     Handles the deletion of a file from the local machine and backend.
     """
+
+    file_name = DriveFile.objects.get(file_id=file_id).name
+
     # Delete the file from the local system
-    file_path = f'/path_to_local_storage/{file_id}'  # Customize this with the actual file storage path
+    file_path = settings.BASE_DIR + f'/downloads/{file_name}'  # Customize this with the actual file storage path
     if os.path.exists(file_path):
         os.remove(file_path)
         print(f"Deleted file {file_id} from local storage")
@@ -81,20 +85,3 @@ def handle_file_deletion(file_id):
     # Remove the file record from the backend database
     DriveFile.objects.filter(file_id=file_id).delete()
     print(f"Deleted file {file_id} from the database")
-
-
-def handle_file_update(file_metadata):
-    """
-    Handles the update of a file in the local machine and backend.
-    """
-    file_id = file_metadata['id']
-    file_name = file_metadata['name']
-
-    # Check if the file already exists in the local system or in the database
-    drive_file, created = DriveFile.objects.update_or_create(
-        file_id=file_id,
-        defaults={'name': file_name, 'status': 'syncing'}
-    )
-
-    # Download or update the file if necessary (re-download the updated file)
-    # download_file(file_id, file_name)
