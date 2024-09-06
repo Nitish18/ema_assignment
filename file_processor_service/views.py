@@ -1,3 +1,5 @@
+import json
+
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .tasks import download_file_task  # Celery task import
@@ -9,6 +11,7 @@ from googleapiclient.discovery import build
 from auth_service.views import check_credentials  # Import the check_credentials function
 
 
+@csrf_exempt
 def file_upload(request):
     """
     API endpoint to initiate file download tasks.
@@ -25,13 +28,14 @@ def file_upload(request):
     if request.method == 'POST':
         try:
             # Get the list of file IDs from the POST request
-            file_ids = request.POST.getlist('file_ids[]')  # Assuming file_ids is passed as an array
-            user_id = request.POST.get('user_id')  # Optional user ID for fetching user-specific credentials
+            data = json.loads(request.body)
+            # Extract the file_list from the JSON data
+            file_id_list = data.get('file_ids', [])
 
             # Start a Celery async task for each file ID
             task_ids = []
-            for file_id in file_ids:
-                task = download_file_task.delay(file_id, credentials)
+            for file_id in file_id_list:
+                task = download_file_task(file_id, credentials)
                 task_ids.append(task.id)
 
             # Return a response with the initiated task IDs

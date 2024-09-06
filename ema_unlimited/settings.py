@@ -42,7 +42,19 @@ INSTALLED_APPS = [
     'file_explorer_service',
     'file_processor_service',
     'sync_manager_service',
+    'channels',
 ]
+
+ASGI_APPLICATION = 'ema_unlimited.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('127.0.0.1', 6379)],  # Redis server address
+        },
+    },
+}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
