@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import login_required  # Import @login_requi
 from googleapiclient.discovery import build
 
 from auth_service.views import check_credentials  # Import the check_credentials function
+from sync_manager_service.syncer import create_watch  # Import the create_watch function
 
 
 @csrf_exempt
@@ -36,6 +37,7 @@ def file_upload(request):
             task_ids = []
             for file_id in file_id_list:
                 task = download_file_task(file_id, credentials)
+                create_watch(credentials, file_id, request.user.id)
                 task_ids.append(task.id)
 
             # Return a response with the initiated task IDs
