@@ -92,7 +92,7 @@ def check_credentials(request):
     Fetches OAuth credentials from the database and refreshes them if expired.
     """
     if not request.user.is_authenticated:
-        return redirect('login')  # Ensure the user is authenticated in Django
+        return redirect('admin:login')
 
     try:
         # Retrieve the user's credentials from the MySQL database

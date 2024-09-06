@@ -6,7 +6,6 @@ from auth_service.models import UserCredentials
 from auth_service.views import check_credentials  # Import the check_credentials function
 
 
-@login_required
 def get_drive_files(request):
     """
     Fetches all files and folders from Google Drive using OAuth tokens.
@@ -23,8 +22,16 @@ def get_drive_files(request):
         # Create the Google Drive API service using valid OAuth credentials
         service = build('drive', 'v3', credentials=credentials)
 
+        query_params = request.GET
+        query = None
+        if 'folderId' in query_params:
+            query = f"'{query_params['folderId']}' in parents"
+        else:
+            query = "'root' in parents"
+
         # Fetch all files and folders from Google Drive
         results = service.files().list(
+            q=query,
             pageSize=1000,  # Fetches up to 1000 items per page
             fields="nextPageToken, files(id, name, mimeType, parents)"
         ).execute()
