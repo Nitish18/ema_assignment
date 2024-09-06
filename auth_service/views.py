@@ -11,6 +11,7 @@ from django.http import HttpResponse
 from google_auth_oauthlib.flow import Flow
 
 from auth_service.models import UserCredentials
+from django.contrib.auth.models import User
 
 # Path to Google OAuth 2.0 client credentials JSON file
 CREDENTIALS_FILE = os.path.join(settings.BASE_DIR, 'auth_creds.json')
@@ -86,7 +87,7 @@ def logout(request):
     return HttpResponse("Logged out!")
 
 
-def check_credentials(request):
+def check_credentials(request=None, user_id=None):
     """
     Checks if the user is authenticated and their credentials are valid.
     Fetches OAuth credentials from the database and refreshes them if expired.
@@ -94,9 +95,22 @@ def check_credentials(request):
     if not request.user.is_authenticated:
         return redirect('admin:login')
 
+    user_obj = None
+    if not request and user_id:
+        user_obj = User.objects.get(id=user_id)
+        if not user_obj:
+            return HttpResponse("User not found!", status=404)
+        elif not user_obj.is_authenticated:
+            return redirect('admin:login')
+
     try:
-        # Retrieve the user's credentials from the MySQL database
-        user_creds = UserCredentials.objects.get(user=request.user)
+        user_creds = None
+
+        if user_obj:
+            user_creds = UserCredentials.objects.get(user=user_obj)
+        else:
+            # Retrieve the user's credentials from the MySQL database
+            user_creds = UserCredentials.objects.get(user=request.user)
 
         # Reconstruct the credentials object from the database fields
         credentials = Credentials(

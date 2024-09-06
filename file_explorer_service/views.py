@@ -33,7 +33,7 @@ def get_drive_files(request):
         results = service.files().list(
             q=query,
             pageSize=1000,  # Fetches up to 1000 items per page
-            fields="nextPageToken, files(id, name, mimeType, parents)"
+            fields="nextPageToken, files(id, name, mimeType, parents, capabilities)"
         ).execute()
 
         items = results.get('files', [])
@@ -45,7 +45,8 @@ def get_drive_files(request):
                 'id': item['id'],
                 'name': item['name'],
                 'mimeType': item['mimeType'],
-                'parents': item.get('parents', [])
+                'parents': item.get('parents', []),
+                'can_download': item.get('capabilities', {}).get('canDownload', False),
             })
 
         # Return the list of files and folders as JSON
