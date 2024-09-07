@@ -1,6 +1,7 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+
 class FileDownloadConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         # Join a group for file download notifications

@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-e1q)c=9s18gnxfpj@#0dz-_%j#%6l57lwkbq1ew7+av%2-gid5
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'a1a5-2405-201-5c08-d833-e0e2-83dc-a04b-e053.ngrok-free.app']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '8a19-2405-201-5c08-d833-b414-f7c2-4145-6e01.ngrok-free.app']
 
 
 # Application definition
@@ -144,3 +144,13 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Celery configuration
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Redis as the message broker
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # Use Redis to store task results
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'  # Adjust to your timezone
+CELERY_TASK_DEFAULT_QUEUE = 'default'

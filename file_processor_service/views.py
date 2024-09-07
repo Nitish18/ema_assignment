@@ -49,10 +49,9 @@ def file_upload(request):
                 else:
                     # If it's a regular file, download the file
                     print(f"File detected: {file_id}. Initiating file download...")
-                    task = download_file_task(file_id, credentials)
-                    #task_ids.append(task.id)
+                    task = download_file_task.delay(file_id, user_id)
+                    task_ids.append(task.id)
                     create_watch(credentials, file_id, user_id)
-
 
             # Return a response with the initiated task IDs
             return JsonResponse({"message": "Download tasks started", "task_ids": task_ids})

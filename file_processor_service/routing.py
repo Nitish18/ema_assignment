@@ -1,6 +1,7 @@
-from django.urls import path
-from .consumers import FileDownloadConsumer
+from django.urls import re_path
+from file_processor_service.consumers import FileDownloadConsumer
+
 
 websocket_urlpatterns = [
-    path('ws/file-downloads/', FileDownloadConsumer.as_asgi()),
+    re_path(r'ws/file-downloads/$', FileDownloadConsumer.as_asgi()),
 ]
